@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-    "encoding/json"
+	"encoding/json"
 	"database/sql"
 	"log"
 	"fmt"
@@ -56,60 +56,60 @@ func createCertificate(st Student) {
 // Enviar um certificado
 func serveCertificate(st Student, rw *http.ResponseWriter, req *http.Request) {
 	// Preenche as informaçoes do estudante
-    injectInfo(&st)
+	injectInfo(&st)
 
 	// Cria o arquivo do PDF do certificado
-    createCertificate(st)
+	createCertificate(st)
 
 	// Envia o arquivo para download
-    http.ServeFile(*rw, req, st.Cpf + ".pdf")
+	http.ServeFile(*rw, req, st.Cpf + ".pdf")
 
 	// Deleta o arquivo do server
-    os.Remove(st.Cpf + ".pdf")
+	os.Remove(st.Cpf + ".pdf")
 }
 
 // Receber as requisições GET e POST
 func webserver(rw http.ResponseWriter, req *http.Request) {
-    if req.URL.Path != "/" {
-        http.Error(rw, "404 not found.", http.StatusNotFound)
-        return
-    }
+	if req.URL.Path != "/" {
+		http.Error(rw, "404 not found.", http.StatusNotFound)
+		return
+	}
 
-    switch req.Method {
-    case "GET":
-    	var st Student
+	switch req.Method {
+	case "GET":
+		var st Student
 
-	    // Extrai o CPF do parâmetro da URL
-        st.Cpf = req.URL.Query()["cpf"][0]
+		// Extrai o CPF do parâmetro da URL
+		st.Cpf = req.URL.Query()["cpf"][0]
 
-        // Envia o certificado
-        serveCertificate(st, &rw, req)
-    case "POST":
-    	var st Student
+		// Envia o certificado
+		serveCertificate(st, &rw, req)
+	case "POST":
+		var st Student
 
-    	// Extrai o CPF do JSON do POST
-    	decoder := json.NewDecoder(req.Body)
-        err := decoder.Decode(&st)
-        if err != nil {
-        	log.Fatal(err)
-        }
+		// Extrai o CPF do JSON do POST
+		decoder := json.NewDecoder(req.Body)
+		err := decoder.Decode(&st)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-        // Envia o certificado
-        serveCertificate(st, &rw, req)
-    default:
-        fmt.Fprintf(rw, "Sorry, only GET and POST methods are supported.")
-    }
+		// Envia o certificado
+		serveCertificate(st, &rw, req)
+	default:
+		fmt.Fprintf(rw, "Sorry, only GET and POST methods are supported.")
+	}
 }
 
 func main() {
 	setupDB()
 
-    http.HandleFunc("/", webserver)
+	http.HandleFunc("/", webserver)
 
-    fmt.Printf("Starting server for testing HTTP GET and POST...\n")
-    if err := http.ListenAndServe(":8080", nil); err != nil {
-        log.Fatal(err)
-    }
+	fmt.Printf("Starting server for testing HTTP GET and POST...\n")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 
-    db.Close()
+	db.Close()
 }
